@@ -1,0 +1,546 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>РКСИ Расписание</title>
+<style>
+:root{
+  --bg1:#e2ecff;--bg2:#f4ebff;--b1:rgba(96,165,250,.62);--b2:rgba(192,132,252,.5);--b3:rgba(45,212,191,.42);--b4:rgba(253,164,175,.42);
+  --g1:rgba(255,255,255,.66);--g2:rgba(255,255,255,.38);--gs1:rgba(255,255,255,.88);--gs2:rgba(255,255,255,.7);
+  --edge:rgba(255,255,255,.95);--hair:rgba(40,60,120,.12);--text:#121b34;--muted:#586482;--acc:#2563eb;--acc2:#7c3aed;
+  --warn:#b45309;--warnt:rgba(245,158,11,.2);--live:#15803d;--livet:rgba(34,197,94,.18);--div:rgba(40,60,120,.1);--dim:rgba(210,222,250,.4);
+}
+:root[data-t=dark]{
+  --bg1:#080c1e;--bg2:#140a26;--b1:rgba(37,99,235,.5);--b2:rgba(139,92,246,.46);--b3:rgba(20,184,166,.34);--b4:rgba(244,63,94,.26);
+  --g1:rgba(255,255,255,.105);--g2:rgba(255,255,255,.045);--gs1:rgba(40,44,80,.82);--gs2:rgba(24,26,52,.9);
+  --edge:rgba(255,255,255,.28);--hair:rgba(0,0,0,.4);--text:#eef3ff;--muted:#9caaca;--acc:#60a5fa;--acc2:#a78bfa;
+  --warn:#fbbf24;--warnt:rgba(251,191,36,.13);--live:#4ade80;--livet:rgba(74,222,128,.13);--div:rgba(255,255,255,.08);--dim:rgba(4,6,18,.55);
+}
+:root[data-t=black]{
+  --bg1:#000;--bg2:#070709;--b1:rgba(255,255,255,.07);--b2:rgba(170,170,190,.07);--b3:rgba(255,255,255,.05);--b4:rgba(130,130,140,.07);
+  --g1:rgba(255,255,255,.09);--g2:rgba(255,255,255,.035);--gs1:rgba(22,22,26,.9);--gs2:rgba(12,12,15,.94);
+  --edge:rgba(255,255,255,.2);--hair:rgba(0,0,0,.7);--text:#f5f5f7;--muted:#9898a3;--acc:#66aaff;--acc2:#9682ff;
+  --warn:#fbbf24;--warnt:rgba(251,191,36,.13);--live:#4ade80;--livet:rgba(74,222,128,.13);--div:rgba(255,255,255,.075);--dim:rgba(0,0,0,.7);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden;background:var(--bg1);color:var(--text);
+  font:15px/1.35 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+#bg{position:fixed;inset:0;z-index:0;background:linear-gradient(160deg,var(--bg1),var(--bg2))}
+#bg i{position:absolute;border-radius:50%;filter:blur(50px)}
+#bg i:nth-child(1){width:70vw;height:70vw;left:-15vw;top:-10vw;background:var(--b1)}
+#bg i:nth-child(2){width:60vw;height:60vw;right:-20vw;top:5vh;background:var(--b2)}
+#bg i:nth-child(3){width:70vw;height:70vw;right:-10vw;bottom:-20vw;background:var(--b3)}
+#bg i:nth-child(4){width:50vw;height:50vw;left:-15vw;bottom:5vh;background:var(--b4)}
+#app{position:fixed;inset:0;z-index:1;display:flex;flex-direction:column;
+  padding-top:env(safe-area-inset-top,24px)}
+.glass{background:linear-gradient(160deg,var(--g1),var(--g2));border:1px solid var(--edge);border-radius:22px;
+  box-shadow:0 0 0 1px var(--hair),0 8px 28px rgba(10,20,60,.14);
+  -webkit-backdrop-filter:blur(20px) saturate(1.4);backdrop-filter:blur(20px) saturate(1.4)}
+.strong{background:linear-gradient(160deg,var(--gs1),var(--gs2))}
+main{flex:1;min-height:0;position:relative}
+.page{position:absolute;inset:0;display:none;flex-direction:column;padding:0 14px}
+.page.on{display:flex}
+h1{font-size:28px;margin:12px 2px 2px;font-weight:800;letter-spacing:-.3px}
+.sub{color:var(--muted);font-size:13.5px;margin:0 2px 8px}
+.row{display:flex;align-items:center;gap:8px}
+.grow{flex:1;min-width:0}
+.scroll{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;padding:4px 0 96px;-webkit-overflow-scrolling:touch}
+.scroll::-webkit-scrollbar{display:none}
+button{font:inherit;color:var(--text);cursor:pointer}
+.btn{padding:9px 16px;border-radius:999px;border:1px solid var(--edge);background:linear-gradient(160deg,var(--g1),var(--g2));box-shadow:0 0 0 1px var(--hair)}
+.btn:active{transform:scale(.97)}
+.btn.pri{background:linear-gradient(135deg,var(--acc),var(--acc2));border-color:transparent;color:#fff;font-weight:600}
+.btn[disabled]{opacity:.4}
+.pill{display:inline-block;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:700;white-space:nowrap}
+.pill.acc{color:var(--acc);background:color-mix(in srgb,var(--acc) 16%,transparent)}
+.pill.live{color:var(--live);background:var(--livet)}
+.pill.warn{color:var(--warn);background:var(--warnt)}
+.day{margin:0 0 12px;padding:12px 8px 6px}
+.day.today{box-shadow:0 0 0 1px var(--hair),0 0 0 1.5px color-mix(in srgb,var(--acc) 55%,transparent),0 8px 28px rgba(10,20,60,.14)}
+.dh{display:flex;align-items:baseline;gap:8px;padding:0 10px 6px}
+.dh b{font-size:19px}.dh span{color:var(--muted)}.dh .pill{margin-left:auto;align-self:center}
+.ls{display:flex;gap:14px;padding:10px 10px;border-top:1px solid var(--div);border-radius:0}
+.ls:first-of-type{border-top:0}
+.ls.live{background:var(--livet);border-radius:14px;border-top-color:transparent}
+.ls.chg{background:var(--warnt);border-radius:14px;border-top-color:transparent}
+.tm{width:48px;flex:none}.tm b{display:block;font-size:15.5px}.tm span{color:var(--muted);font-size:13px}
+.sj{font-weight:600}.mt{color:var(--muted);font-size:13.5px}
+.msg{padding:20px;color:var(--muted)}
+.banner{padding:14px 16px;margin-bottom:12px;background:var(--warnt)}
+.banner b{color:var(--warn);display:block;margin-bottom:4px}
+.status{color:var(--muted);font-size:12.5px;margin:0 2px 6px;min-height:16px}
+.status.warn{color:var(--warn)}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{padding:9px 14px;border-radius:999px;border:1px solid var(--edge);background:linear-gradient(160deg,var(--g1),var(--g2));box-shadow:0 0 0 1px var(--hair);font-weight:600;position:relative}
+.chip.sel{color:var(--acc);border-color:var(--acc);background:color-mix(in srgb,var(--acc) 14%,transparent)}
+.chip.mine::after{content:"";position:absolute;top:6px;right:8px;width:6px;height:6px;border-radius:50%;background:var(--acc)}
+.chip.mine{padding-right:20px}
+.filters{padding:12px;margin-bottom:8px}
+.fgrid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.fb{text-align:left;padding:8px 12px;border-radius:16px;border:1px solid var(--edge);background:linear-gradient(160deg,var(--g1),var(--g2));box-shadow:0 0 0 1px var(--hair);min-width:0}
+.fb small{display:block;color:var(--muted);font-size:11px}
+.fb span{display:block;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fb.on{border-color:var(--acc)}.fb.on span{color:var(--acc)}
+.fb[disabled]{opacity:.5}
+.days{display:flex;gap:6px;margin-top:10px;align-items:center}
+.days .chip{padding:7px 0;flex:1;text-align:center;font-size:13px}
+.nav{position:absolute;left:12px;right:12px;bottom:calc(env(safe-area-inset-bottom,0px) + 12px);z-index:5;display:flex;padding:6px;gap:4px;border-radius:26px}
+.nav button{flex:1;border:0;background:transparent;padding:10px 4px;border-radius:20px;font-weight:600;color:var(--muted);font-size:13px}
+.nav button.on{color:var(--acc);background:color-mix(in srgb,var(--acc) 15%,transparent)}
+.sheet-bg{position:fixed;inset:0;z-index:20;background:var(--dim);display:none;align-items:flex-end}
+.sheet-bg.on{display:flex}
+.sheet{width:100%;max-height:88%;display:flex;flex-direction:column;padding:18px 16px calc(env(safe-area-inset-bottom,0px) + 14px);border-radius:28px 28px 0 0}
+.sheet h2{margin:0 0 2px;font-size:22px}
+.sheet input{width:100%;margin:10px 0;padding:12px 16px;border-radius:999px;border:1px solid var(--edge);background:var(--g2);color:var(--text);font:inherit;outline:none}
+.sheet .list{overflow-y:auto;flex:1;min-height:120px;padding:4px 0}
+.bar{display:flex;gap:8px;margin-top:10px}.bar .sp{flex:1}
+.stat-total{font-size:30px;font-weight:800;margin:4px 2px 0}
+.bars{padding:18px 18px 14px}
+.br{margin-bottom:14px}
+.br .t{display:flex;justify-content:space-between;gap:10px;font-weight:600}
+.br .t em{font-style:normal;color:var(--acc);white-space:nowrap}
+.br .tr{height:10px;border-radius:5px;background:color-mix(in srgb,var(--text) 10%,transparent);margin-top:6px;overflow:hidden}
+.br .tr i{display:block;height:100%;width:0;border-radius:5px;background:linear-gradient(90deg,var(--acc),var(--acc2));transition:width .6s cubic-bezier(.2,.8,.2,1)}
+.theme{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:6px}
+.theme .chip{text-align:center;padding:9px 0;font-size:13px}
+@media(min-width:760px){#app{max-width:760px;margin:0 auto}}
+</style>
+</head>
+<body>
+<div id="bg"><i></i><i></i><i></i><i></i></div>
+<div id="app">
+  <main>
+    <section class="page on" id="p0">
+      <div class="row"><div class="grow"><h1 id="mTitle">Моя группа</h1></div><span class="pill acc" id="mPill" hidden>Моя группа</span></div>
+      <div class="row" style="margin-bottom:6px"><div class="sub grow" id="mSub"></div>
+        <button class="btn" id="mRef">Обновить</button><button class="btn pri" id="mChange">Сменить</button></div>
+      <div class="status" id="mStatus"></div>
+      <div class="scroll" id="mList"></div>
+    </section>
+    <section class="page" id="p1">
+      <h1>Разовый выбор</h1>
+      <div class="sub">Расписание группы или преподавателя. Фильтры можно сочетать.</div>
+      <div class="glass filters">
+        <div class="fgrid">
+          <button class="fb" id="fG"><small>Группа</small><span></span></button>
+          <button class="fb" id="fT"><small>Преподаватель</small><span></span></button>
+          <button class="fb" id="fS"><small>Предмет</small><span></span></button>
+        </div>
+        <div class="days" id="fD"></div>
+        <div class="bar"><span class="sp"></span><button class="btn" id="fR">Сбросить</button></div>
+      </div>
+      <div class="status" id="sStatus"></div>
+      <div class="scroll" id="sList"></div>
+    </section>
+    <section class="page" id="p2">
+      <h1>Статистика</h1>
+      <div class="sub" id="stSub"></div>
+      <div class="chips" id="stWeeks" style="margin-bottom:8px"></div>
+      <div class="scroll" id="stBody"></div>
+    </section>
+    <section class="page" id="p3">
+      <h1>Оформление</h1>
+      <div class="sub">Тема приложения</div>
+      <div class="theme" id="themes"></div>
+      <div class="sub" style="margin-top:22px">Расписание берётся с rksi.ru и проверяется каждые 2 минуты, пока приложение открыто.</div>
+    </section>
+  </main>
+  <nav class="nav glass strong" id="nav">
+    <button data-i="0" class="on">Моя группа</button>
+    <button data-i="1">Разовый</button>
+    <button data-i="2">Статистика</button>
+    <button data-i="3">Тема</button>
+  </nav>
+</div>
+
+<div class="sheet-bg" id="sheetBg"><div class="sheet glass strong" id="sheet">
+  <h2 id="shTitle"></h2><div class="sub" id="shSub"></div>
+  <input id="shSearch" type="search" autocomplete="off">
+  <div class="list"><div class="chips" id="shList"></div><div class="msg" id="shMsg"></div></div>
+  <div class="bar"><button class="btn" id="shReset">Сбросить</button><span class="sp"></span><button class="btn" id="shCancel">Отмена</button><button class="btn pri" id="shSave">Сохранить</button></div>
+</div></div>
+
+<script>
+"use strict";
+/* ---------------- утилиты ---------------- */
+const $ = s => document.querySelector(s);
+const MONTHS = {"января":1,"февраля":2,"марта":3,"апреля":4,"мая":5,"июня":6,"июля":7,"августа":8,"сентября":9,"октября":10,"ноября":11,"декабря":12};
+const MONTHS_GEN = ["января","февраля","марта","апреля","мая","июня","июля","августа","сентября","октября","ноября","декабря"];
+const MS = ["янв","фев","мар","апр","мая","июн","июл","авг","сен","окт","ноя","дек"];
+const WD = ["Понедельник","Вторник","Среда","Четверг","Пятница","Суббота","Воскресенье"];
+const WD_SHORT = ["Пн","Вт","Ср","Чт","Пт","Сб"];
+const WD_IN = ["в понедельник","во вторник","в среду","в четверг","в пятницу","в субботу","в воскресенье"];
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const store = {
+  get(k, d){ try{ const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); }catch(e){ return d; } },
+  set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+};
+const pad = n => String(n).padStart(2, "0");
+const iso = d => `${d.getUTCFullYear()}-${pad(d.getUTCMonth()+1)}-${pad(d.getUTCDate())}`;
+const parseIso = s => { const [y,m,d] = s.split("-").map(Number); return new Date(Date.UTC(y, m-1, d)); };
+const weekday = s => (parseIso(s).getUTCDay() + 6) % 7;           // пн = 0
+const longDate = s => { const d = parseIso(s); return `${d.getUTCDate()} ${MONTHS_GEN[d.getUTCMonth()]}`; };
+const shortDate = s => { const d = parseIso(s); return `${d.getUTCDate()} ${MS[d.getUTCMonth()]}`; };
+const toMin = t => { const [h,m] = t.split(":").map(Number); return h*60+m; };
+function nowMsk(){
+  const p = Object.fromEntries(new Intl.DateTimeFormat("en-GB",{timeZone:"Europe/Moscow",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",hourCycle:"h23"})
+    .formatToParts(new Date()).map(x => [x.type, x.value]));
+  return {date:`${p.year}-${p.month}-${p.day}`, min:+p.hour*60 + +p.minute, hm:`${p.hour}:${p.minute}`};
+}
+const plural = (n, f) => { const a = n%10, b = n%100; return a===1&&b!==11 ? f[0] : (a>=2&&a<=4&&!(b>=12&&b<=14) ? f[1] : f[2]); };
+
+/* ---------------- сеть: Android-мост или fetch (для проверки в браузере) ---------------- */
+const BASE = new URLSearchParams(location.search).get("base") || "https://rksi.ru";
+let rxId = 0; const rx = {};
+window.__rx = (id, status, text) => { const r = rx[id]; delete rx[id]; if (r) (status === 200 ? r.ok(text) : r.fail(new Error("HTTP " + status))); };
+function getText(path){
+  return new Promise((ok, fail) => {
+    if (window.Android){ const id = ++rxId; rx[id] = {ok, fail}; window.Android.get(id, path); }
+    else fetch(BASE + path).then(r => r.ok ? r.text() : Promise.reject(new Error("HTTP " + r.status))).then(ok, fail);
+  });
+}
+
+/* ---------------- парсер (порт parser.py) ---------------- */
+const RE_DAY = /^(\d{1,2})\s+([а-яё]+),\s*([а-яё]+)$/i;
+const RE_TIME = /^(\d{1,2}:\d{2})\s*[—–-]\s*(\d{1,2}:\d{2})$/;
+const RE_WHO = /^(.*?)(?:,\s*)?ауд\.\s*(.+)$/i;
+const STOPS = ["К обычному расписанию", "Вернуться к выбору"];
+function textLines(html){
+  const doc = new DOMParser().parseFromString(html, "text/html");
+  doc.querySelectorAll("script,style,nav,header,footer").forEach(e => e.remove());
+  const out = [], w = doc.createTreeWalker(doc.body, NodeFilter.SHOW_TEXT);
+  for (let n; (n = w.nextNode());) n.nodeValue.split("\n").forEach(l => { l = l.trim(); if (l) out.push(l); });
+  return out;
+}
+function guessYear(d, m, today){
+  const t = parseIso(today); let best = t.getUTCFullYear(), bd = null;
+  for (const y of [best-1, best, best+1]){
+    const x = new Date(Date.UTC(y, m-1, d)); if (x.getUTCMonth() !== m-1) continue;
+    const delta = Math.abs(x - t); if (bd === null || delta < bd){ best = y; bd = delta; }
+  }
+  return best;
+}
+function parseSchedule(html, today){
+  const lines = textLines(html), n = lines.length, isDay = l => { const m = RE_DAY.exec(l); return m && MONTHS[m[2].toLowerCase()]; };
+  const fd = lines.findIndex(isDay);
+  const title = fd > 0 ? lines[fd-1] : "";
+  const out = []; let cd = "", cw = "", i = 0;
+  while (i < n){
+    const ln = lines[i];
+    if (STOPS.some(s => ln.startsWith(s)) && out.length) break;
+    const m = RE_DAY.exec(ln);
+    if (m && MONTHS[m[2].toLowerCase()]){
+      const d = +m[1], mon = MONTHS[m[2].toLowerCase()];
+      cd = `${guessYear(d, mon, today)}-${pad(mon)}-${pad(d)}`; cw = m[3].toLowerCase(); i++; continue;
+    }
+    const t = RE_TIME.exec(ln);
+    if (t && cd){
+      const subject = i+1 < n ? lines[i+1] : ""; let who = "", room = "", j = i+2;
+      if (j < n && !RE_TIME.test(lines[j]) && !isDay(lines[j]) && lines[j] !== "---" && !STOPS.some(s => lines[j].startsWith(s))){
+        const wr = RE_WHO.exec(lines[j]);
+        if (wr){ who = wr[1].replace(/^[ ,]+|[ ,]+$/g, ""); room = wr[2].trim(); } else who = lines[j];
+        j++;
+      }
+      out.push({date:cd, weekday:cw, start:t[1].padStart(5,"0"), end:t[2].padStart(5,"0"), subject, who, room});
+      i = j; continue;
+    }
+    i++;
+  }
+  out.sort((a,b) => (a.date+a.start+a.who).localeCompare(b.date+b.start+b.who));
+  return {title, lessons: out};
+}
+function parseIndex(html, kind){
+  const doc = new DOMParser().parseFromString(html, "text/html"), by = {}, list = [];
+  doc.querySelectorAll("a[href]").forEach(a => {
+    const m = /\/mobileschedule\/(groups|teachers)\/(\d+)/.exec(a.getAttribute("href"));
+    if (!m || m[1] !== kind) return;
+    const name = a.textContent.trim(), id = +m[2];
+    if (kind === "groups") by[name] = Math.max(by[name] || 0, id); else list.push({id, name});
+  });
+  const res = kind === "groups" ? Object.entries(by).map(([name, id]) => ({id, name})) : list;
+  return res.sort((a,b) => a.name.localeCompare(b.name, "ru"));
+}
+
+/* ---------------- логика (порт logic.py) ---------------- */
+const cf = s => s.toLocaleLowerCase("ru");
+const sortRu = a => [...a].sort((x,y) => cf(x).localeCompare(cf(y), "ru"));
+const teachersOf = ls => sortRu([...new Set(ls.filter(l => l.who).map(l => l.who))]);
+const subjectsOf = (ls, t) => sortRu([...new Set(ls.filter(l => !t || l.who === t).map(l => l.subject))]);
+const matches = (l, o) => !(o.teacher && l.who !== o.teacher) && !(o.subject && l.subject !== o.subject) && !(o.days.size && !o.days.has(weekday(l.date)));
+function mondayOf(s){ const d = parseIso(s); d.setUTCDate(d.getUTCDate() - weekday(s)); return iso(d); }
+function weekStats(ls){
+  const seen = new Set(), by = {};
+  for (const l of ls){ const k = l.date + "|" + l.start + "|" + l.subject; if (seen.has(k)) continue; seen.add(k); (by[mondayOf(l.date)] ||= []).push(l); }
+  return Object.keys(by).sort().map(k => {
+    const a = by[k], sj = {}, dy = {};
+    a.forEach(l => { sj[l.subject] = (sj[l.subject]||0)+1; const w = weekday(l.date); dy[w] = (dy[w]||0)+1; });
+    const dates = a.map(l => l.date).sort();
+    return {key:k, first:dates[0], last:dates[dates.length-1], total:a.length, days:dy,
+      subjects:Object.entries(sj).sort((x,y) => y[1]-x[1] || cf(x[0]).localeCompare(cf(y[0]), "ru"))};
+  });
+}
+function defaultWeek(ws){ let b = 0; ws.forEach((w,i) => { if (w.total > ws[b].total) b = i; }); return b; }
+function weekLabel(w){
+  const a = parseIso(w.first), b = parseIso(w.last);
+  if (w.first === w.last) return `${a.getUTCDate()} ${MS[a.getUTCMonth()]}`;
+  if (a.getUTCMonth() === b.getUTCMonth()) return `${a.getUTCDate()}–${b.getUTCDate()} ${MS[a.getUTCMonth()]}`;
+  return `${a.getUTCDate()} ${MS[a.getUTCMonth()]} – ${b.getUTCDate()} ${MS[b.getUTCMonth()]}`;
+}
+function busiestDay(w){
+  const e = Object.entries(w.days).map(([d,c]) => [+d, c]); if (!e.length) return null;
+  return e.sort((x,y) => y[1]-x[1] || x[0]-y[0])[0];
+}
+/* изменения: сравнение сохранённого снимка с новым (новые и прошедшие дни не считаем) */
+function diffLessons(old, cur, today){
+  const oldDays = new Set(old.map(l => l.date)), key = l => [l.date,l.start].join("|");
+  const full = l => [l.subject,l.who,l.room].join("|"), ch = [];
+  const om = {}, nm = {};
+  old.forEach(l => (om[key(l)] ||= []).push(l)); cur.forEach(l => (nm[key(l)] ||= []).push(l));
+  for (const k of new Set([...Object.keys(om), ...Object.keys(nm)])){
+    const [d, st] = k.split("|"); if (d < today || !oldDays.has(d)) continue;
+    const o = (om[k] || []).slice(), c = (nm[k] || []).slice();
+    for (let i = o.length-1; i >= 0; i--){ const j = c.findIndex(x => full(x) === full(o[i])); if (j >= 0){ o.splice(i,1); c.splice(j,1); } }
+    while (o.length && c.length) ch.push({type:"changed", date:d, start:st, before:o.shift().subject, after:c.shift().subject});
+    o.forEach(x => ch.push({type:"removed", date:d, start:st, before:x.subject}));
+    c.forEach(x => ch.push({type:"added", date:d, start:st, after:x.subject}));
+  }
+  return ch.sort((a,b) => (a.date+a.start).localeCompare(b.date+b.start));
+}
+
+/* ---------------- данные с кэшем ---------------- */
+const idxCache = {};
+async function getIndex(kind){
+  if (idxCache[kind]) return idxCache[kind];
+  try{ const r = parseIndex(await getText("/mobileschedule/" + kind), kind); if (r.length){ store.set("idx_" + kind, r); return idxCache[kind] = r; } }catch(e){}
+  const c = store.get("idx_" + kind, null); if (c) return c; throw new Error("index");
+}
+async function getSchedule(kind, id, track){
+  const key = `snap_${kind}_${id}`, today = nowMsk().date;
+  try{
+    const s = parseSchedule(await getText(`/mobileschedule/${kind}/${id}`), today), prev = store.get(key, null);
+    let changes = prev ? diffLessons(prev.lessons, s.lessons, today) : [];
+    if (track){ if (prev && !changes.length && prev.changes) changes = prev.changes.filter(c => c.date >= today);
+      store.set(key, {lessons:s.lessons, fetched:Date.now(), changes}); }
+    return {title:s.title, lessons:s.lessons, changes, stale:false, fetched:Date.now()};
+  }catch(e){
+    const prev = store.get(key, null);
+    if (prev) return {title:"", lessons:prev.lessons, changes:prev.changes || [], stale:true, fetched:prev.fetched};
+    throw e;
+  }
+}
+
+/* ---------------- отрисовка расписания ---------------- */
+function lessonHtml(l, state){
+  const meta = [l.who, l.room ? "ауд. " + l.room : ""].filter(Boolean).join(", ");
+  const pill = state === "live" ? '<span class="pill live">идёт</span>' : state === "chg" ? '<span class="pill warn">изменено</span>' : "";
+  return `<div class="ls ${state}"><div class="tm"><b>${l.start}</b><span>${l.end}</span></div>
+    <div class="grow"><div class="sj">${esc(l.subject)}</div>${meta ? `<div class="mt">${esc(meta)}</div>` : ""}</div>${pill}</div>`;
+}
+function renderDays(el, data, opts){
+  const now = nowMsk(), changed = new Set((data.changes || []).map(c => c.date + "|" + c.start));
+  let html = "";
+  if (!opts.filtering && data.changes && data.changes.length){
+    html += `<div class="glass banner"><b>Изменения в расписании</b>` + data.changes.map(c => {
+      const w = `${shortDate(c.date)}, ${c.start}`;
+      return `<div>${esc(c.type === "changed" ? `${w}: было «${c.before}», стало «${c.after}»` : c.type === "removed" ? `${w}: пара отменена — ${c.before}` : `${w}: добавлена пара — ${c.after}`)}</div>`;
+    }).join("") + `</div>`;
+  }
+  const ls = data.lessons.filter(opts.fn || (() => true));
+  if (!ls.length){
+    html += `<div class="glass msg">${opts.filtering && data.lessons.length ? "По выбранным фильтрам пар нет. Уберите часть фильтров." : "На сайте пока нет пар. Расписание на следующую неделю появляется ближе к её началу."}</div>`;
+    el.innerHTML = html; return;
+  }
+  const days = {}; ls.forEach(l => (days[l.date] ||= []).push(l));
+  for (const [d, items] of Object.entries(days)){
+    const today = d === now.date;
+    html += `<div class="glass day ${today ? "today" : ""}"><div class="dh"><b>${WD[weekday(d)]}</b><span>${longDate(d)}</span>${today ? '<span class="pill acc">сегодня</span>' : ""}</div>` +
+      items.map(l => lessonHtml(l, today && toMin(l.start) <= now.min && now.min < toMin(l.end) ? "live" : changed.has(l.date + "|" + l.start) ? "chg" : "")).join("") + `</div>`;
+  }
+  el.innerHTML = html;
+}
+
+/* ---------------- состояние ---------------- */
+const S = {
+  tab: 0, mine: store.get("group", null), my: null, theme: store.get("theme", "System"),
+  one: {group:null, teacher:null, subject:null, days:new Set(), data:null, kind:"", id:null, req:0},
+  statsWeek: null
+};
+
+/* ---------------- тема ---------------- */
+const THEMES = [["System","Авто"],["Light","Светлая"],["Dark","Тёмная"],["Black","Чёрная"]];
+const mq = matchMedia("(prefers-color-scheme: dark)");
+function applyTheme(){
+  const t = S.theme === "System" ? (mq.matches ? "dark" : "light") : S.theme.toLowerCase();
+  document.documentElement.dataset.t = t;
+  if (window.Android && window.Android.setBars) window.Android.setBars(t !== "light");
+  $("#themes").innerHTML = THEMES.map(([k, n]) => `<button class="chip ${k === S.theme ? "sel" : ""}" data-k="${k}">${n}</button>`).join("");
+}
+$("#themes").onclick = e => { const k = e.target.dataset.k; if (!k) return; S.theme = k; store.set("theme", k); applyTheme(); };
+mq.addEventListener && mq.addEventListener("change", applyTheme);
+
+/* ---------------- вкладки ---------------- */
+function go(i){
+  S.tab = i;
+  document.querySelectorAll(".page").forEach((p, j) => p.classList.toggle("on", j === i));
+  document.querySelectorAll("#nav button").forEach((b, j) => b.classList.toggle("on", j === i));
+}
+$("#nav").onclick = e => { const b = e.target.closest("button"); if (b) go(+b.dataset.i); };
+
+/* ---------------- окно выбора (нижняя панель) ---------------- */
+const sh = {mode:"", items:[], current:null, mine:null, pending:null, onPick:null, req:0};
+function openSheet(o){
+  sh.mode = o.mode; sh.onPick = o.onPick; sh.current = o.current ?? null; sh.mine = o.mine ?? null; sh.pending = null; sh.req++;
+  $("#shTitle").textContent = o.title; $("#shSub").textContent = o.sub || "";
+  $("#shSearch").placeholder = o.placeholder || "Поиск"; $("#shSearch").value = "";
+  $("#shReset").hidden = !o.reset; $("#shCancel").hidden = o.mode === "first"; $("#shSave").hidden = o.mode !== "change"; $("#shSave").disabled = true;
+  $("#sheetBg").classList.add("on");
+  if (o.items) setItems(o.items);
+  else {
+    const req = sh.req; $("#shList").innerHTML = ""; $("#shMsg").textContent = "Загружаю список…";
+    o.loader().then(it => { if (req === sh.req) setItems(it); },
+      () => { if (req === sh.req) $("#shMsg").innerHTML = 'Не удалось загрузить список. <button class="btn" id="shRetry">Повторить</button>', $("#shRetry").onclick = () => openSheet(o); });
+  }
+}
+function setItems(items){
+  sh.items = items; $("#shMsg").textContent = items.length ? "" : "Список пуст."; drawItems();
+}
+function drawItems(){
+  const q = $("#shSearch").value.trim().toLowerCase();
+  const vis = sh.items.filter(([k, n]) => n.toLowerCase().includes(q));
+  $("#shList").innerHTML = vis.map(([k, n]) => `<button class="chip ${k === sh.mine ? "mine" : ""} ${k === (sh.pending ? sh.pending[0] : sh.current) ? "sel" : ""}" data-k="${esc(String(k))}">${esc(n)}</button>`).join("");
+  if (sh.items.length) $("#shMsg").textContent = vis.length ? "" : "Ничего не найдено. Проверьте название.";
+}
+function closeSheet(){ sh.req++; $("#sheetBg").classList.remove("on"); }
+$("#shSearch").oninput = drawItems;
+$("#shList").onclick = e => {
+  const b = e.target.closest(".chip"); if (!b) return;
+  const it = sh.items.find(([k]) => String(k) === b.dataset.k); if (!it) return;
+  if (sh.mode === "first"){ closeSheet(); setMine({id:it[0], name:it[1]}); }
+  else if (sh.mode === "change"){ sh.pending = it; $("#shSave").disabled = !!(S.mine && S.mine.id === it[0]); drawItems(); }
+  else { const cb = sh.onPick; closeSheet(); cb(it[0], it[1]); }
+};
+$("#shSave").onclick = () => { if (sh.pending){ const p = sh.pending; closeSheet(); setMine({id:p[0], name:p[1]}); } };
+$("#shCancel").onclick = closeSheet;
+$("#shReset").onclick = () => { const cb = sh.onPick; closeSheet(); cb(null, null); };
+$("#sheetBg").onclick = e => { if (e.target.id === "sheetBg" && sh.mode !== "first") closeSheet(); };
+window.__back = () => { if ($("#sheetBg").classList.contains("on") && sh.mode !== "first"){ closeSheet(); return true; } if (S.tab !== 0){ go(0); return true; } return false; };
+
+const loadGroups = async () => (await getIndex("groups")).map(i => [i.id, i.name]);
+const loadTeachers = async () => sortRu([...new Set((await getIndex("teachers")).map(i => i.name))]).map(n => [n, n]);
+
+/* ---------------- Моя группа ---------------- */
+let myReq = 0;
+function setMine(g){
+  S.mine = g; store.set("group", g); S.my = null; S.statsWeek = null; renderMine(); renderStats(); go(0); loadMine();
+}
+function renderMine(){
+  const g = S.mine;
+  $("#mTitle").textContent = g ? g.name : "Моя группа"; $("#mPill").hidden = !g;
+  $("#mRef").hidden = !g; $("#mChange").textContent = g ? "Сменить" : "Выбрать";
+  if (!g){ $("#mSub").textContent = ""; $("#mStatus").textContent = ""; $("#mList").innerHTML = '<div class="glass msg">Группа ещё не выбрана.</div>'; return; }
+  if (S.my){
+    const l = S.my.lessons; $("#mSub").textContent = l.length ? `${shortDate(l[0].date)} — ${shortDate(l[l.length-1].date)}` : "";
+    renderDays($("#mList"), S.my, {});
+  }
+}
+async function loadMine(silent){
+  const g = S.mine; if (!g) return; const req = ++myReq;
+  if (!silent){ $("#mStatus").className = "status"; $("#mStatus").textContent = "Загружаю расписание…"; }
+  try{
+    const d = await getSchedule("groups", g.id, true); if (req !== myReq) return;
+    const sig = JSON.stringify([d.lessons, d.changes, nowMsk().date]), first = !S.my;
+    S.my = d;
+    $("#mStatus").className = "status" + (d.stale ? " warn" : "");
+    $("#mStatus").textContent = d.stale ? `Сайт колледжа не отвечает. Показана копия от ${new Date(d.fetched).toLocaleString("ru", {day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})}.` : `Обновлено в ${nowMsk().hm}`;
+    if (sig !== S._mySig){ S._mySig = sig; renderMine(); if (first) scrollToday($("#mList")); }
+    renderStats();
+  }catch(e){ if (req !== myReq) return; $("#mStatus").className = "status warn"; $("#mStatus").textContent = "Не удалось загрузить расписание. Проверьте интернет и нажмите «Обновить»."; }
+}
+function scrollToday(el){ const t = el.querySelector(".today"); if (t && t !== el.querySelector(".day")) setTimeout(() => el.scrollTop = Math.max(t.offsetTop - 8, 0), 60); }
+$("#mRef").onclick = () => loadMine();
+$("#mChange").onclick = () => openSheet({mode:S.mine ? "change" : "first", title:S.mine ? "Изменить мою группу" : "Выберите вашу группу",
+  sub:S.mine ? "Выберите новую группу и нажмите «Сохранить»." : "Её расписание откроется на вкладке «Моя группа».", placeholder:"Найти группу, например ИС-21",
+  loader:loadGroups, mine:S.mine && S.mine.id});
+
+/* ---------------- Разовый выбор ---------------- */
+const O = S.one;
+const forGroup = () => O.group ? O.teacher : null;
+const oneFilter = () => ({teacher:forGroup(), subject:O.subject, days:O.days});
+const oneFiltering = () => !!(O.subject || O.days.size || (O.group && O.teacher));
+function drawOne(){
+  const set = (id, v) => { const b = $(id); b.querySelector("span").textContent = v || "Любой"; b.classList.toggle("on", !!v); };
+  set("#fG", O.group && O.group[1]); set("#fT", O.teacher); set("#fS", O.subject);
+  $("#fS").disabled = !O.data;
+  document.querySelectorAll("#fD .chip").forEach((c, i) => c.classList.toggle("sel", O.days.has(i)));
+  if (!O.data){ $("#sList").innerHTML = '<div class="glass msg">Выберите группу или преподавателя, и здесь появится расписание на неделю.</div>'; return; }
+  renderDays($("#sList"), O.data, {fn:l => matches(l, oneFilter()), filtering:oneFiltering()});
+}
+function validateOne(){
+  let ch = false; const ls = O.data ? O.data.lessons : [];
+  if (O.group && O.teacher && !teachersOf(ls).includes(O.teacher)){ O.teacher = null; ch = true; }
+  if (O.subject && !subjectsOf(ls, forGroup()).includes(O.subject)){ O.subject = null; ch = true; }
+  return ch;
+}
+async function sourceChanged(){
+  const req = ++O.req; O.data = null; O.kind = ""; O.id = null; drawOne();
+  let kind, id;
+  try{
+    if (O.group){ kind = "groups"; id = O.group[0]; }
+    else if (O.teacher){ kind = "teachers"; const n = O.teacher; const it = (await getIndex("teachers")).find(i => i.name === n); if (!it) return; id = it.id; }
+    else { $("#sStatus").textContent = ""; return; }
+    if (req !== O.req) return;
+    $("#sStatus").className = "status"; $("#sStatus").textContent = "Загружаю расписание…";
+    const d = await getSchedule(kind, id, false); if (req !== O.req) return;
+    O.data = d; O.kind = kind; O.id = id; validateOne();
+    $("#sStatus").className = "status" + (d.stale ? " warn" : ""); $("#sStatus").textContent = d.stale ? "Сайт не отвечает, показана сохранённая копия." : `Обновлено в ${nowMsk().hm}`;
+    drawOne();
+  }catch(e){ if (req === O.req){ $("#sStatus").className = "status warn"; $("#sStatus").textContent = "Не удалось загрузить расписание. Проверьте интернет."; } }
+}
+$("#fD").innerHTML = WD_SHORT.map((n, i) => `<button class="chip" data-i="${i}">${n}</button>`).join("");
+$("#fD").onclick = e => { const b = e.target.closest(".chip"); if (!b) return; const i = +b.dataset.i; O.days.has(i) ? O.days.delete(i) : O.days.add(i); validateOne(); drawOne(); };
+$("#fG").onclick = () => openSheet({mode:"choice", title:"Выберите группу", sub:"Ваша группа отмечена точкой.", placeholder:"Найти группу, например ИС-21", loader:loadGroups,
+  current:O.group && O.group[0], mine:S.mine && S.mine.id, reset:!!O.group, onPick:(k, n) => { O.group = k === null ? null : [k, n]; sourceChanged(); }});
+$("#fT").onclick = () => {
+  const ls = O.data ? O.data.lessons : [];
+  const o = {mode:"choice", title:"Выберите преподавателя", placeholder:"Найти по фамилии", current:O.teacher, reset:!!O.teacher,
+    onPick:k => { O.teacher = k; O.group ? (validateOne(), drawOne()) : sourceChanged(); }};
+  if (O.group && O.data){ o.sub = `Только преподаватели группы ${O.group[1]}.`; o.items = teachersOf(ls).map(n => [n, n]); }
+  else if (O.group){ const gid = O.group[0]; o.sub = "Преподаватели группы."; o.loader = async () => teachersOf((await getSchedule("groups", gid, false)).lessons).map(n => [n, n]); }
+  else { o.sub = "Все преподаватели колледжа."; o.loader = loadTeachers; }
+  openSheet(o);
+};
+$("#fS").onclick = () => { if (!O.data) return;
+  openSheet({mode:"choice", title:"Выберите предмет", sub:"Предметы из выбранного расписания.", placeholder:"Найти предмет", current:O.subject, reset:!!O.subject,
+    items:subjectsOf(O.data.lessons, forGroup()).map(s => [s, s]), onPick:k => { O.subject = k; drawOne(); }}); };
+$("#fR").onclick = () => { O.group = O.teacher = O.subject = null; O.days = new Set(); sourceChanged(); };
+
+/* ---------------- Статистика ---------------- */
+function renderStats(){
+  const g = S.mine, body = $("#stBody"), wk = $("#stWeeks");
+  $("#stSub").textContent = g ? "Группа " + g.name : "";
+  const msg = t => { wk.innerHTML = ""; body.innerHTML = `<div class="glass msg">${t}</div>`; };
+  if (!g) return msg("Выберите группу на вкладке «Моя группа», и здесь появится статистика.");
+  if (!S.my) return msg("Загружаю расписание…");
+  const ws = weekStats(S.my.lessons); if (!ws.length) return msg("На сайте пока нет пар, считать нечего.");
+  let idx = ws.findIndex(w => w.key === S.statsWeek); if (idx < 0) idx = defaultWeek(ws);
+  const w = ws[idx]; S.statsWeek = w.key;
+  wk.innerHTML = ws.length > 1 ? ws.map((x, i) => `<button class="chip ${i === idx ? "sel" : ""}" data-k="${x.key}">${weekLabel(x)}</button>`).join("") : "";
+  const n = w.subjects.length, bd = busiestDay(w), max = w.subjects[0][1];
+  body.innerHTML = `<div class="stat-total">${w.total} ч в неделю</div>
+    <div class="sub">${n} ${plural(n, ["дисциплина","дисциплины","дисциплин"])}${bd ? `. Больше всего пар ${WD_IN[bd[0]]}: ${bd[1]}.` : ""}</div>
+    <div class="glass bars">${w.subjects.map(([s, h]) => `<div class="br"><div class="t"><span>${esc(s)}</span><em>${h} ч</em></div><div class="tr"><i data-w="${h / max * 100}"></i></div></div>`).join("")}
+    <div class="mt" style="font-size:12.5px">Одна пара — один час. Подгруппы в одно время считаются один раз. Учитываются только опубликованные дни.</div></div>`;
+  requestAnimationFrame(() => requestAnimationFrame(() => body.querySelectorAll(".tr i").forEach(i => i.style.width = i.dataset.w + "%")));
+}
+$("#stWeeks").onclick = e => { const b = e.target.closest(".chip"); if (b){ S.statsWeek = b.dataset.k; renderStats(); } };
+
+/* ---------------- запуск ---------------- */
+applyTheme(); renderMine(); renderStats(); drawOne();
+if (S.mine) loadMine(); else openSheet({mode:"first", title:"Выберите вашу группу", sub:"Её расписание откроется на вкладке «Моя группа». Сменить группу можно там же.",
+  placeholder:"Найти группу, например ИС-21", loader:loadGroups});
+setInterval(() => { loadMine(true); if (S.tab === 1 && O.id !== null && !$("#sheetBg").classList.contains("on")){ const req = O.req;
+  getSchedule(O.kind, O.id, false).then(d => { if (req === O.req){ O.data = d; validateOne(); drawOne(); } }, () => {}); } }, 120000);
+</script>
+</body>
+</html>
